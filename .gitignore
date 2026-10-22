@@ -23,3 +23,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Data and pipeline caches
+data/cache/
+
