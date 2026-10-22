@@ -28,10 +28,11 @@ flowchart TD
 
     subgraph Intelligence ["🧠 Decision Engine (LangGraph)"]
         Orchestrator["FDE Orchestrator (src/orchestrator.py)"]
-        LLM["Google Gemini 3.5 Flash Lite / DeepSeek / Ollama"]
+        LLM["Google Gemini 3.5 Flash Lite"]
         Memory["MemorySaver (Session Checkpointing)"]
-        Orchestrator <--> LLM
-        Orchestrator <--> Memory
+        Orchestrator --> LLM
+        LLM --> Orchestrator
+        Orchestrator --> Memory
     end
 
     subgraph Tooling ["🛠️ Enterprise Subsystems (src/agent_tools.py)"]
@@ -41,23 +42,28 @@ flowchart TD
     end
 
     subgraph DataLayer ["🗄️ Enterprise Data & Vector Tier"]
-        MSSQL[("Microsoft SQL Server 2022<br/>(Docker / On-Prem)")]
-        View["Semantic View<br/>FDE_VIEWS.VW_ACTIVE_FLEET"]
-        Raw["Raw Legacy Table<br/>dbo.TBL_SC_FLEET_HIST_RAW"]
-        Audit["Append-Only Table<br/>FDE_VIEWS.AgentAuditLog"]
-        
-        API["Open-Meteo REST API<br/>(Live Weather & Transit Disruption)"]
-        Pinecone[("Pinecone Serverless Vector DB<br/>(fde-sop-index-local / BGE-M3)")]
+        MSSQL[("Microsoft SQL Server 2022")]
+        View["Semantic View: FDE_VIEWS.VW_ACTIVE_FLEET"]
+        Raw["Raw Legacy Table: dbo.TBL_SC_FLEET_HIST_RAW"]
+        Audit["Append-Only Table: FDE_VIEWS.AgentAuditLog"]
+        API["Open-Meteo REST API (Live Weather & Corridor Risk)"]
+        Pinecone[("Pinecone Serverless Vector DB (BGE-M3)")]
     end
 
-    Tab1 <--> Orchestrator
-    Orchestrator --> T1 & T2 & T3
+    Tab1 --> Orchestrator
+    Orchestrator --> Tab1
 
-    T1 -->|USR_FDE_RO (Read-Only)| View --> Raw
+    Orchestrator --> T1
+    Orchestrator --> T2
+    Orchestrator --> T3
+
+    T1 -->|"USR_FDE_RO Read-Only"| View
+    View --> Raw
     T2 --> API
     T3 --> Pinecone
-    Tab1 -.->|Silent Audit Trace| Audit
-    Tab2 -->|Admin sa Auth Only| Audit
+
+    Tab1 -.->|"Silent Audit Trace"| Audit
+    Tab2 -->|"Admin sa Auth Only"| Audit
 ```
 
 ---
