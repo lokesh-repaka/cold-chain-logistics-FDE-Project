@@ -35,3 +35,21 @@ GO
 
 -- # About line 33 :
 -- ON SCHEMA::dbo: The dbo (Database Owner) schema is the default folder structure where your python ingestion script just dumped the TBL_SC_FLEET_HIST_RAW table. This target applies the rules to every single table or view currently inside dbo, or any tables you might add there in the future.
+
+-- 5. Create an Append-Only Audit Log Table for the AI Agent
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AgentAuditLog' AND schema_id = SCHEMA_ID('FDE_VIEWS'))
+BEGIN
+    CREATE TABLE FDE_VIEWS.AgentAuditLog (
+        LogID INT IDENTITY(1,1) PRIMARY KEY,
+        Timestamp DATETIME DEFAULT GETDATE(),
+        SessionID VARCHAR(50),
+        NodeExecuted VARCHAR(50),
+        ToolName VARCHAR(100),
+        Content NVARCHAR(MAX) -- NVARCHAR to safely handle JSON strings and large LLM outputs
+    );
+END
+GO
+
+-- Grant the agent user permission to write only to this specific table (Append-Only)
+GRANT INSERT ON FDE_VIEWS.AgentAuditLog TO USR_FDE_RO;
+GO
